@@ -5,6 +5,7 @@ from flask import Flask
 
 #ORM for connect python code
 from flask_sqlalchemy import SQLAlchemy
+from flask_restful import Resource, Api, reqparse, fields, marshal_with, abort
 
 app=Flask(__name__)
 
@@ -23,6 +24,38 @@ class UserModel(db.Model):
     def __repr__(self): 
         return f"User(name = {self.name}, email = {self.email})"
 
+#When arguments passing to the functions given fields can't be null(means arguments passing should completed)
+user_args = reqparse.RequestParser()
+user_args.add_argument('name', type=str, required=True, help="Name cannot be blank")
+user_args.add_argument('email', type=str, required=True, help="Email cannot be blank")
+
+#Defining the user's data fields
+userFields = {
+    'id':fields.Integer,
+    'name':fields.String,
+    'email':fields.String,
+}
+
+#Getting the users
+class Users(Resource):
+    #marshaling(decorating) allows to send the stored user data in the json format
+    @marshal_with(userFields)
+    def get(self):
+        users = UserModel.query.all() 
+        return users 
+
+    #marshaling(decorating) using to store users to database table
+    @marshal_with(userFields)
+    def post(self):
+        args = user_args.parse_args()
+        user = UserModel(name=args["name"], email=args["email"])
+        db.session.add(user) 
+        db.session.commit()
+        users = UserModel.query.all()
+        #user successfully added response
+        return users, 201
+        api.add_resource(Users, '/api/users/')
+    
 #route for the home page
 @app.route('/')
 
