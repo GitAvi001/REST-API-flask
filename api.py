@@ -55,6 +55,38 @@ class Users(Resource):
         #user successfully added response
         return users, 201
         api.add_resource(Users, '/api/users/')
+
+#If the entered id doesn't match with the existing ids error meassage shown
+class User(Resource):
+    @marshal_with(userFields)
+    def get(self, id):
+        user = UserModel.query.filter_by(id=id).first() 
+        if not user: 
+            abort(404, message="User not found")
+        return user 
+    
+
+    @marshal_with(userFields)
+    def patch(self, id):
+        args = user_args.parse_args()
+        user = UserModel.query.filter_by(id=id).first()
+        if not user: 
+            abort(404, message="User not found")
+        user.name = args["name"]
+        user.email = args["email"]
+        db.session.commit()
+        return user 
+    
+    @marshal_with(userFields)
+    def delete(self, id):
+        user = UserModel.query.filter_by(id=id).first() 
+        if not user: 
+            abort(404, message="User not found")
+        db.session.delete(user)
+        db.session.commit()
+        users = UserModel.query.all()
+        return users
+
     
 #route for the home page
 @app.route('/')
